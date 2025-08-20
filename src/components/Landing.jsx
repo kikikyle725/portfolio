@@ -345,7 +345,7 @@ export default function SpaceLandingPage({ onEnter }) {
           // Random 3D direction
           const angle1 = Math.random() * Math.PI * 2;
           const angle2 = Math.random() * Math.PI;
-          const speed = 0.5 + Math.random() * 1.0;
+          const speed = 0.5 + Math.random() * 0.5;
 
           system.velocities[i3] = Math.sin(angle2) * Math.cos(angle1) * speed;
           system.velocities[i3 + 1] = Math.sin(angle2) * Math.sin(angle1) * speed;
@@ -425,7 +425,7 @@ export default function SpaceLandingPage({ onEnter }) {
             sphereRef.current.scale.set(normalScale, normalScale, normalScale);
 
             // Regular particle emission (INCREASED FREQUENCY)
-            if (Math.random() < 0.3) { // Increased from 0.15 to 0.3
+            if (Math.random() < 0.05) { // Increased from 0.15 to 0.3
               emitParticle(false);
             }
           }
