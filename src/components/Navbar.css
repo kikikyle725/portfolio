@@ -1,0 +1,130 @@
+body {
+  display: flex;
+  justify-content: center; /* horizontal center */
+  align-items: flex-start;  /* align to top */
+  height: 100vh;
+  margin: 0;
+  padding-top: 0.5rem; /* spacing from top */
+  background:transparent;
+  font-family: sans-serif;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  position: relative;
+  height: 3.3rem;
+  width: 25vw;                 /* roughly 1/4 of screen width */
+  max-width: 300px;            /* optional max width for smaller screens */
+  min-width: 200px; 
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(20px);
+  border-radius: 50px; /* more rounded */
+  padding: 0 1rem;
+  margin: 0 auto 0 auto;    /* centers navbar horizontally */
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  z-index: 1; /* above circle */
+  height: 100%;
+}
+
+.nav-label {
+  position: absolute;
+  bottom: -1.25rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.85);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* show on hover */
+.nav-item:hover .nav-label {
+  opacity: 1;
+}
+
+/* show when active */
+.nav-item.active .nav-label {
+  opacity: 1;
+}
+
+.nav-icon {
+  font-size: 1.5rem;
+  color: rgba(197, 59, 59, 0.9);
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 0 0 rgba(255,255,255,0));
+}
+
+.nav-icon--big {
+  font-size: 2.0rem;
+}
+
+.nav-item:hover .nav-icon {
+  transform: scale(1.15);
+  filter: drop-shadow(0 0 15px rgba(255,255,255,0.6));
+}
+
+
+
+
+/* highlight circle */
+.highlight-circle {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 8px 25px rgba(255,255,255,0.2);
+  transition: left 0.35s ease, top 0.35s ease, transform 0.3s ease;
+  z-index: 0;
+}
+
+.nav-item:active ~ .highlight-circle,
+.nav-item:hover ~ .highlight-circle {
+  transform: scale(1.05); /* slight pop effect when moving */
+}
+
+
+/* smaller tablets or medium screens */
+@media (max-width: 768px) {
+  .navbar {
+    width: 35vw;        /* slightly wider for smaller screens */
+  }
+  .nav-icon {
+    font-size: 1.3rem;
+  }
+  .nav-icon--big {
+    font-size: 1.45rem;
+  }
+  .highlight-circle {
+    width: 35px;
+    height: 35px;
+  }
+}
+
+/* small mobile screens */
+@media (max-width: 480px) {
+  .navbar {
+    width: 50vw;       /* still centered, takes half screen width */
+  }
+  .nav-icon {
+    font-size: 1.1rem;
+  }
+  .nav-icon--big {
+    font-size: 1.25rem;
+  }
+  .highlight-circle {
+    width: 30px;
+    height: 30px;
+  }
+}
