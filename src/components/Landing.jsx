@@ -197,15 +197,15 @@ export default function SpaceLandingPage({ onEnter }) {
         positions[i3] = 0;
         positions[i3 + 1] = 0;
         positions[i3 + 2] = 0;
-
+        
         // Set all velocities to zero initially
         velocities[i3] = 0;
         velocities[i3 + 1] = 0;
         velocities[i3 + 2] = 0;
-
+        
         // Set lifetimes to 0 (inactive)
         lifetimes[i] = 0;
-
+        
         // Set initial colors to transparent (will be set when particle becomes active)
         colors[i3] = 0;     // R
         colors[i3 + 1] = 0; // G  
@@ -330,7 +330,7 @@ export default function SpaceLandingPage({ onEnter }) {
           system.velocities[i3 + 1] = (dy / distance) * 0.8;
           system.velocities[i3 + 2] = (dz / distance) * 0.8;
 
-          system.lifetimes[index] = distance / 0.8; // Set active lifetime
+          system.lifetimes[index] = 1.5; // Set active lifetime
 
           // Set color to cyan for convergent particles
           system.colors[i3] = 0.0;     // R
@@ -351,17 +351,13 @@ export default function SpaceLandingPage({ onEnter }) {
           system.velocities[i3 + 1] = Math.sin(angle2) * Math.sin(angle1) * speed;
           system.velocities[i3 + 2] = Math.cos(angle2) * speed;
 
-          system.lifetimes[index] = 2.5 + Math.random() * 1.0; // Set active lifetime
+          system.lifetimes[index] = Math.random() * 1.0; // Set active lifetime
 
           // Set color to white/yellow for emitted particles
           system.colors[i3] = 1.0;     // R
           system.colors[i3 + 1] = 1.0; // G
           system.colors[i3 + 2] = 0.5; // B (yellowish)
         }
-
-        // Always update the attributes
-        system.geometry.attributes.position.needsUpdate = true;
-        system.geometry.attributes.color.needsUpdate = true;
       };
 
       // Animation loop
@@ -429,121 +425,179 @@ export default function SpaceLandingPage({ onEnter }) {
             sphereRef.current.scale.set(normalScale, normalScale, normalScale);
 
             // Regular particle emission (INCREASED FREQUENCY)
-            if (Math.random() < 0.15) { // Increased from 0.15 to 0.3
+            if (Math.random() < 0.05) { // Increased from 0.15 to 0.3
               emitParticle(false);
             }
           }
-        
+        }
+
+        // Update particles (FIXED)
+        if (particleSystemRef.current) {
+          const system = particleSystemRef.current;
+          const deltaTime = 0.016;
+          let hasActiveParticles = false;
+
+          for (let i = 0; i < maxParticles; i++) {
+            if (system.lifetimes[i] > 0) {
+              hasActiveParticles = true;
+              const i3 = i * 3;
+
+              // Update position
+              system.positions[i3] += system.velocities[i3];
+              system.positions[i3 + 1] += system.velocities[i3 + 1];
+              system.positions[i3 + 2] += system.velocities[i3 + 2];
+
+              // Update lifetime
+              system.lifetimes[i] -= deltaTime;
+
+              // Update color intensity based on lifetime (fade effect)
+              const initialLifetime = 2.5; // approximate max lifetime
+              const lifeRatio = Math.max(0, Math.min(1, system.lifetimes[i] / initialLifetime));
+
+              // Determine if this is a convergent or emitted particle based on velocity direction
+              const speed = Math.sqrt(
+                system.velocities[i3] * system.velocities[i3] +
+                system.velocities[i3 + 1] * system.velocities[i3 + 1] +
+                system.velocities[i3 + 2] * system.velocities[i3 + 2]
+              );
+
+              // Simple check: if it was set as cyan originally, keep it cyan
+              const wasCyan = system.colors[i3] < 0.1 && system.colors[i3 + 1] > 0.9;
+              
+              if (wasCyan && system.lifetimes[i] > 0) {
+                // Cyan particles (converging to sphere)
+                system.colors[i3] = 0.0 * lifeRatio;     // R
+                system.colors[i3 + 1] = 1.0 * lifeRatio; // G
+                system.colors[i3 + 2] = 1.0 * lifeRatio; // B
+              } else if (system.lifetimes[i] > 0) {
+                // White/yellow particles (emitting from sphere)
+                system.colors[i3] = 1.0 * lifeRatio;     // R
+                system.colors[i3 + 1] = 1.0 * lifeRatio; // G
+                system.colors[i3 + 2] = 0.5 * lifeRatio; // B (yellowish)
+              }
+
+              // Deactivate if lifetime expired
+              if (system.lifetimes[i] <= 0) {
+                system.colors[i3] = 0;
+                system.colors[i3 + 1] = 0;
+                system.colors[i3 + 2] = 0;
+              }
+            }
+          }
+
+          // Always update the attributes
+          system.geometry.attributes.position.needsUpdate = true;
+          system.geometry.attributes.color.needsUpdate = true;
+        }
+
+        renderer.render(scene, camera);
+      };
+
+      // Handle window resize
+      const handleResize = () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      };
+
+      window.addEventListener('resize', handleResize);
+
+      // Start animation
+      animate();
+
+      // Cleanup function
+      const cleanup = () => {
+        if (animationIdRef.current) {
+          cancelAnimationFrame(animationIdRef.current);
+        }
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mousedown', handleMouseDown);
+        window.removeEventListener('mouseup', handleMouseUp);
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+        window.removeEventListener('resize', handleResize);
+
+        if (mountRef.current && renderer.domElement) {
+          mountRef.current.removeChild(renderer.domElement);
+        }
+        renderer.dispose();
+      };
+
+      // Return cleanup function
+      return cleanup;
+    }; // End of initScene
+
+    // Call the async initialization
+    const cleanupPromise = initScene();
+    
+    // Cleanup on unmount
+    return () => {
+      if (cleanupPromise && typeof cleanupPromise.then === 'function') {
+        cleanupPromise.then(cleanup => cleanup && cleanup());
       }
-
-      renderer.render(scene, camera);
     };
+  }, [onEnter]);
 
-    // Handle window resize
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
+  return (
+    <div className="relative w-full h-screen overflow-hidden cursor-pointer bg-black"
+         onClick={onEnter}>
+      {/* 3D Canvas */}
+      <div ref={mountRef} className="w-full h-full" />
 
-    window.addEventListener('resize', handleResize);
-
-    // Start animation
-    animate();
-
-    // Cleanup function
-    const cleanup = () => {
-      if (animationIdRef.current) {
-        cancelAnimationFrame(animationIdRef.current);
-      }
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-      window.removeEventListener('resize', handleResize);
-
-      if (mountRef.current && renderer.domElement) {
-        mountRef.current.removeChild(renderer.domElement);
-      }
-      renderer.dispose();
-    };
-
-    // Return cleanup function
-    return cleanup;
-  }; // End of initScene
-
-  // Call the async initialization
-  const cleanupPromise = initScene();
-
-  // Cleanup on unmount
-  return () => {
-    if (cleanupPromise && typeof cleanupPromise.then === 'function') {
-      cleanupPromise.then(cleanup => cleanup && cleanup());
-    }
-  };
-}, [onEnter]);
-
-return (
-  <div className="relative w-full h-screen overflow-hidden cursor-pointer bg-black"
-    onClick={onEnter}>
-    {/* 3D Canvas */}
-    <div ref={mountRef} className="w-full h-full" />
-
-    {/* Instructions overlay */}
-    <div className="absolute top-8 left-8 text-white z-10">
-      <div className="bg-black/50 p-4 rounded-lg backdrop-blur-sm">
-        <h1 className="text-2xl font-bold mb-2">Welcome to Kyle's 3D Universe</h1>
-        <div className="text-sm space-y-1 opacity-90">
-          <div>🖱️ <strong>Mouse:</strong> Look around</div>
-          <div>✨ <strong>Click & hold sphere:</strong> See particle effects</div>
-          <div>🚀 <strong>Click sphere:</strong> Enter website</div>
-        </div>
-      </div>
-    </div>
-
-    {/* Model Configuration Info */}
-    <div className="absolute top-8 right-8 text-white z-10">
-      <div className="bg-black/50 p-4 rounded-lg backdrop-blur-sm text-sm">
-        <h3 className="font-bold mb-2">3D Assets Status</h3>
-        <div className="space-y-1 opacity-80">
-          <div>Main Sphere: {MODEL_CONFIG.mainSphere.useModel ? "3D Model" : "Geometry"}</div>
-          <div>Nebula: {MODEL_CONFIG.nebulaClouds.useModels ? "3D Models" : "Geometry"}</div>
-          <div>Asteroids: {MODEL_CONFIG.asteroids.useModels ? "3D Models" : "Geometry"}</div>
-          <div>Structures: {MODEL_CONFIG.spaceStructures.useModels ? "Enabled" : "Disabled"}</div>
-          <div className="text-yellow-400 mt-2">⚡ Particles: Active</div>
-        </div>
-      </div>
-    </div>
-
-    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
-      <div className="text-center text-white">
-        {isTransitioning && (
-          <div className="text-3xl font-semibold animate-bounce bg-black/50 p-6 rounded-lg backdrop-blur-sm">
-            ✨ Entering the website...
+      {/* Instructions overlay */}
+      <div className="absolute top-8 left-8 text-white z-10">
+        <div className="bg-black/50 p-4 rounded-lg backdrop-blur-sm">
+          <h1 className="text-2xl font-bold mb-2">Welcome to Kyle's 3D Universe</h1>
+          <div className="text-sm space-y-1 opacity-90">
+            <div>🖱️ <strong>Mouse:</strong> Look around</div>
+            <div>✨ <strong>Click & hold sphere:</strong> See particle effects</div>
+            <div>🚀 <strong>Click sphere:</strong> Enter website</div>
           </div>
-        )}
+        </div>
       </div>
-    </div>
 
-    {/* Crosshair */}
-    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
-      <div className="w-4 h-4 border border-white/50 border-dashed"></div>
-    </div>
+      {/* Model Configuration Info */}
+      <div className="absolute top-8 right-8 text-white z-10">
+        <div className="bg-black/50 p-4 rounded-lg backdrop-blur-sm text-sm">
+          <h3 className="font-bold mb-2">3D Assets Status</h3>
+          <div className="space-y-1 opacity-80">
+            <div>Main Sphere: {MODEL_CONFIG.mainSphere.useModel ? "3D Model" : "Geometry"}</div>
+            <div>Nebula: {MODEL_CONFIG.nebulaClouds.useModels ? "3D Models" : "Geometry"}</div>
+            <div>Asteroids: {MODEL_CONFIG.asteroids.useModels ? "3D Models" : "Geometry"}</div>
+            <div>Structures: {MODEL_CONFIG.spaceStructures.useModels ? "Enabled" : "Disabled"}</div>
+            <div className="text-yellow-400 mt-2">⚡ Particles: Active</div>
+          </div>
+        </div>
+      </div>
 
-    {/* Transition overlay */}
-    {isTransitioning && (
-      <div className="absolute inset-0 bg-white opacity-0 animate-fade-in-slow z-20"
-        style={{ animation: 'fadeInSlow 2s ease-out forwards' }} />
-    )}
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
+        <div className="text-center text-white">
+          {isTransitioning && (
+            <div className="text-3xl font-semibold animate-bounce bg-black/50 p-6 rounded-lg backdrop-blur-sm">
+              ✨ Entering the website...
+            </div>
+          )}
+        </div>
+      </div>
 
-    <style dangerouslySetInnerHTML={{
-      __html: `
+      {/* Crosshair */}
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
+        <div className="w-4 h-4 border border-white/50 border-dashed"></div>
+      </div>
+
+      {/* Transition overlay */}
+      {isTransitioning && (
+        <div className="absolute inset-0 bg-white opacity-0 animate-fade-in-slow z-20"
+             style={{ animation: 'fadeInSlow 2s ease-out forwards' }} />
+      )}
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes fadeInSlow {
           0% { opacity: 0; }
           100% { opacity: 1; }
         }
       `}} />
-  </div>
-);
+    </div>
+  );
 }
