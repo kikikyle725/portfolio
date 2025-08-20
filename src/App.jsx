@@ -9,19 +9,22 @@ import MainSite from "./components/MainSite";
 import PawPrintCursor from "./components/PawPrintCursor"
 //import GlassFruitScene from "./components/GlassFruitScene"; // new background component
 
-  
+
 export default function App() {
-const [showLanding, setShowLanding] = useState(true);
+  const [showLanding, setShowLanding] = useState(true);
   return (
     <div className="relative w-full h-screen">
-      
+
       {/* Render Landing splash screen if visible */}
 
       {showLanding ? (
-        <Landing onEnter={() => setShowLanding(false)} />  // pass function as prop
+        <Landing onEnter={() => {
+          // Delay hiding the landing page
+          setTimeout(() => setShowLanding(false), 2000); // 2000ms = 2 seconds
+        }} />
       ) : (
         <>
-            <PawPrintCursor>
+          <PawPrintCursor>
             <Navbar />
             <MainSite />
             <div style={{ height: "100px" }}></div>
@@ -29,10 +32,10 @@ const [showLanding, setShowLanding] = useState(true);
             <Projects />
             <Contact />
             <Footer />
-            </PawPrintCursor>
-          </>
-        )}
-      
+          </PawPrintCursor>
+        </>
+      )}
+
     </div>
   );
 }
