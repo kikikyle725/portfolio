@@ -219,15 +219,14 @@ export default function SpaceLandingPage({ onEnter }) {
       const circleTexture = textureLoader.load("/circle.png");
 
       const particleMaterial = new THREE.PointsMaterial({
-        size: 5, // Increased size for better visibility
-        transparent: true,
-        vertexColors: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        map: circleTexture,   // 👈 use PNG
-        alphaTest: 0.5
-      });
-
+  size: 8,
+  map: circleTexture,
+  transparent: true,
+  alphaTest: 0.1,
+  vertexColors: true,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending
+});
       const particles = new THREE.Points(particleGeometry, particleMaterial);
       scene.add(particles);
       particlesRef.current = particles;
