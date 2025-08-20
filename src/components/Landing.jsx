@@ -358,6 +358,10 @@ export default function SpaceLandingPage({ onEnter }) {
           system.colors[i3 + 1] = 1.0; // G
           system.colors[i3 + 2] = 0.5; // B (yellowish)
         }
+
+        // Always update the attributes
+        system.geometry.attributes.position.needsUpdate = true;
+        system.geometry.attributes.color.needsUpdate = true;
       };
 
       // Animation loop
@@ -430,13 +434,6 @@ export default function SpaceLandingPage({ onEnter }) {
             }
           }
         
-
-
-
-
-        // Always update the attributes
-        system.geometry.attributes.position.needsUpdate = true;
-        system.geometry.attributes.color.needsUpdate = true;
       }
 
       renderer.render(scene, camera);
