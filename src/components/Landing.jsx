@@ -330,7 +330,7 @@ export default function SpaceLandingPage({ onEnter }) {
           system.velocities[i3 + 1] = (dy / distance) * 0.8;
           system.velocities[i3 + 2] = (dz / distance) * 0.8;
 
-          system.lifetimes[index] = distance/0.8; // Set active lifetime
+          system.lifetimes[index] = 0.3; // Set active lifetime
 
           // Set color to cyan for convergent particles
           system.colors[i3] = 0.0;     // R
