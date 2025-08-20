@@ -215,18 +215,14 @@ export default function SpaceLandingPage({ onEnter }) {
       particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-      const textureLoader = new THREE.TextureLoader();
-      const circleTexture = textureLoader.load("/circle.png");
-
       const particleMaterial = new THREE.PointsMaterial({
-  size: 8,
-  map: circleTexture,
-  transparent: true,
-  alphaTest: 0.1,
-  vertexColors: true,
-  depthWrite: false,
-  blending: THREE.AdditiveBlending
-});
+        size: 5, // Increased size for better visibility
+        transparent: true,
+        vertexColors: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+
       const particles = new THREE.Points(particleGeometry, particleMaterial);
       scene.add(particles);
       particlesRef.current = particles;
