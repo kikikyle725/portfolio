@@ -223,7 +223,7 @@ export default function SpaceLandingPage({ onEnter }) {
         transparent: true,
         vertexColors: true,
         depthWrite: false,
-        blending: THREE.AdditiveBlending
+        blending: THREE.AdditiveBlending,
         map: circleTexture,   // 👈 use PNG
         alphaTest: 0.5
       });
