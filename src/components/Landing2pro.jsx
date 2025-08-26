@@ -215,15 +215,9 @@ export default function SpaceLandingPage({ onEnter }) {
       particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-      // Load particle texture
-      const textureLoader = new THREE.TextureLoader();
-      const sparkleTexture = textureLoader.load('/images/sparkle.webp');
-      const glowTexture = textureLoader.load('/images/glow.png');
-
       const particleMaterial = new THREE.PointsMaterial({
         size: 5, // Increased size for better visibility
         transparent: true,
-        map: glowTexture,
         vertexColors: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending
@@ -301,10 +295,6 @@ export default function SpaceLandingPage({ onEnter }) {
       const emitParticle = (fromCenter = false) => {
         const system = particleSystemRef.current;
         if (!system || !sphereRef.current) return;
-
-      // Then in emitParticle function, randomly choose:
-      const randomTexture = Math.random() > 0.5 ? sparkleTexture : glowTexture;
-      particleMaterial.map = randomTexture;
 
         // Find an inactive particle
         let index = -1;
