@@ -1,6 +1,77 @@
 import { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
+// Add this at the very top of your component for debugging
+export default function SpaceLandingPage({ onEnter }) {
+  const mountRef = useRef(null);
+  const [debugStatus, setDebugStatus] = useState("Starting...");
 
+  useEffect(() => {
+    console.log("=== DEBUG START ===");
+    console.log("THREE available:", typeof THREE !== 'undefined');
+    console.log("THREE object:", THREE);
+    console.log("mountRef:", mountRef.current);
+    
+    if (typeof THREE === 'undefined') {
+      setDebugStatus("ERROR: THREE.js not loaded!");
+      return;
+    }
+    
+    if (!mountRef.current) {
+      setDebugStatus("ERROR: Mount ref not available!");
+      return;
+    }
+    
+    setDebugStatus("Creating scene...");
+    
+    // Minimal test
+    try {
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer();
+      
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x0000ff); // Blue background for testing
+      
+      mountRef.current.appendChild(renderer.domElement);
+      
+      // Add a simple cube to test
+      const geometry = new THREE.BoxGeometry();
+      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+      const cube = new THREE.Mesh(geometry, material);
+      scene.add(cube);
+      
+      camera.position.z = 5;
+      
+      const animate = () => {
+        requestAnimationFrame(animate);
+        cube.rotation.x += 0.01;
+        cube.rotation.y += 0.01;
+        renderer.render(scene, camera);
+      };
+      
+      animate();
+      setDebugStatus("SUCCESS: 3D scene running!");
+      
+    } catch (error) {
+      setDebugStatus(`ERROR: ${error.message}`);
+      console.error("3D Error:", error);
+    }
+  }, []);
+
+  return (
+    <div className="relative w-full h-screen">
+      <div ref={mountRef} className="w-full h-full" />
+      
+      {/* Debug info overlay */}
+      <div className="absolute top-4 left-4 bg-black text-white p-4 rounded z-50 font-mono text-sm">
+        <div>Status: {debugStatus}</div>
+        <div>THREE: {typeof THREE !== 'undefined' ? "✅ Loaded" : "❌ Missing"}</div>
+        <div>Mount: {mountRef.current ? "✅ Ready" : "❌ Not Ready"}</div>
+      </div>
+    </div>
+  );
+}
+/*
 // 3D Model Configuration - Replace with your .glb/.gltf file paths
 const MODEL_CONFIG = {
   // Main interactive sphere - can be replaced with any 3D model
@@ -223,7 +294,7 @@ export default function SpaceLandingPage({ onEnter }) {
       const particleMaterial = new THREE.PointsMaterial({
         size: 5, // Increased size for better visibility
         transparent: true,
-        map: glowTexture,
+        //map: glowTexture,
         vertexColors: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending
@@ -547,14 +618,17 @@ export default function SpaceLandingPage({ onEnter }) {
       }
     };
   }, [onEnter]);
+*/
 
+/*
   return (
+
     <div className="relative w-full h-screen overflow-hidden cursor-pointer bg-black"
          onClick={onEnter}>
-      {/* 3D Canvas */}
+      // 3D Canvas 
       <div ref={mountRef} className="w-full h-full" />
 
-      {/* Instructions overlay */}
+      // Instructions overlay 
       <div className="absolute top-8 left-8 text-white z-10">
         <div className="bg-black/50 p-4 rounded-lg backdrop-blur-sm">
           <h1 className="text-2xl font-bold mb-2">Welcome to Kyle's 3D Universe</h1>
@@ -566,7 +640,7 @@ export default function SpaceLandingPage({ onEnter }) {
         </div>
       </div>
 
-      {/* Model Configuration Info */}
+      //Model Configuration Info 
       <div className="absolute top-8 right-8 text-white z-10">
         <div className="bg-black/50 p-4 rounded-lg backdrop-blur-sm text-sm">
           <h3 className="font-bold mb-2">3D Assets Status</h3>
@@ -590,12 +664,12 @@ export default function SpaceLandingPage({ onEnter }) {
         </div>
       </div>
 
-      {/* Crosshair */}
+      // Crosshair 
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
         <div className="w-4 h-4 border border-white/50 border-dashed"></div>
       </div>
 
-      {/* Transition overlay */}
+      // Transition overlay 
       {isTransitioning && (
         <div className="absolute inset-0 bg-white opacity-0 animate-fade-in-slow z-20"
              style={{ animation: 'fadeInSlow 2s ease-out forwards' }} />
@@ -611,3 +685,4 @@ export default function SpaceLandingPage({ onEnter }) {
     </div>
   );
 }
+*/
