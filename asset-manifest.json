@@ -1,15 +1,17 @@
 {
   "files": {
     "main.css": "/dog-website/static/css/main.a9d83073.css",
-    "main.js": "/dog-website/static/js/main.25e30e8b.js",
+    "main.js": "/dog-website/static/js/main.f3cd359d.js",
     "static/js/453.5fa972c1.chunk.js": "/dog-website/static/js/453.5fa972c1.chunk.js",
+    "static/media/glow.png": "/dog-website/static/media/glow.a35ac2083d223835905d.png",
+    "static/media/sparkle.webp": "/dog-website/static/media/sparkle.488853245bfabedb1b19.webp",
     "index.html": "/dog-website/index.html",
     "main.a9d83073.css.map": "/dog-website/static/css/main.a9d83073.css.map",
-    "main.25e30e8b.js.map": "/dog-website/static/js/main.25e30e8b.js.map",
+    "main.f3cd359d.js.map": "/dog-website/static/js/main.f3cd359d.js.map",
     "453.5fa972c1.chunk.js.map": "/dog-website/static/js/453.5fa972c1.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.a9d83073.css",
-    "static/js/main.25e30e8b.js"
+    "static/js/main.f3cd359d.js"
   ]
 }
