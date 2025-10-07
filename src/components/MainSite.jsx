@@ -1,5 +1,4 @@
-import { useState, useRef, useEffect } from "react";
-import { FaHome, FaUser, FaTools, FaBriefcase, FaFolderOpen, FaPhoneAlt} from "react-icons/fa";
+
 //import "./Navbar.css";
 
 function MainSite() {

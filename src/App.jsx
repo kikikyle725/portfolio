@@ -12,6 +12,7 @@ import PawPrintCursor from "./components/PawPrintCursor"
 
 export default function App() {
   const [showLanding, setShowLanding] = useState(true);
+  const [showWhiteFlash, setShowWhiteFlash] = useState(false);
   return (
     <div className="relative w-full h-screen">
 
@@ -19,10 +20,16 @@ export default function App() {
 
       {showLanding ? (
         <Landing onEnter={() => {
-          // Delay hiding the landing page
-          setTimeout(() => setShowLanding(false), 2000); // 2000ms = 2 seconds
-        }} />
-      ) : (
+        // Start the white flash transition
+        setShowWhiteFlash(true);
+        
+        // After white flash, hide landing and show main content
+        setTimeout(() => {
+          setShowLanding(false);
+          setShowWhiteFlash(false);
+        }, 1500); // Duration of white flash
+      }} />
+    ) : (
         <>
           <PawPrintCursor>
             <Navbar />
@@ -35,7 +42,27 @@ export default function App() {
           </PawPrintCursor>
         </>
       )}
+    {/* White flash overlay that covers everything */}
+    {showWhiteFlash && (
+      <div 
+        className="fixed inset-0 z-50 bg-white"
+        style={{
+          animation: 'fadeInOut 1.5s ease-in-out forwards'
+        }}
+      />
+    )}
 
+    <style dangerouslySetInnerHTML={{
+      __html: `
+        @keyframes fadeInOut {
+          0% { opacity: 0; }
+          20% { opacity: 1; }
+          80% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `
+    }} />
+  
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
+import sparkleImg from '../assets/sparkle.webp';
 
 // 3D Model Configuration - Replace with your .glb/.gltf file paths
 const MODEL_CONFIG = {
@@ -56,6 +57,125 @@ const MODEL_CONFIG = {
     scaleRange: [10, 50]
   }
 };
+
+
+// GSAP-style animation utility (simplified version without GSAP dependency)
+const animateValue = (target, property, endValue, duration, easing = 'easeOut', onUpdate = null, onComplete = null) => {
+  const startValue = target[property];
+  const startTime = Date.now();
+  const change = endValue - startValue;
+  
+  const easingFunctions = {
+    easeOut: t => 1 - Math.pow(1 - t, 3),
+    easeIn: t => t * t * t,
+    easeInOut: t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+  };
+  
+  const easingFunc = easingFunctions[easing] || easingFunctions.easeOut;
+  
+  const animate = () => {
+    const elapsed = Date.now() - startTime;
+    const progress = Math.min(elapsed / (duration * 1000), 1);
+    const easedProgress = easingFunc(progress);
+    
+    target[property] = startValue + (change * easedProgress);
+    
+    if (onUpdate) onUpdate();
+    
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else if (onComplete) {
+      onComplete();
+    }
+  };
+  
+  requestAnimationFrame(animate);
+};
+
+// Transition Component
+function Transition({ camera, onComplete }) {
+  const [flash, setFlash] = useState(false);
+  const overlayRef = useRef(null);
+  
+  const triggerTransition = () => {
+    // Step 1: Zoom camera toward the sphere (0,0,0 assumed target)
+    const originalZ = camera.position.z;
+    const originalFov = camera.fov;
+    
+    // Animate camera position
+    animateValue(
+      camera.position, 
+      'z', 
+      originalZ - 20, // Move much closer for dramatic effect
+      1.5, 
+      'easeIn',
+      () => {
+        // Update camera on each frame
+      }
+    );
+    
+    // Animate FOV for tunnel effect
+    animateValue(
+      camera,
+      'fov',
+      20, // Much narrower FOV
+      1.5,
+      'easeIn',
+      () => camera.updateProjectionMatrix()
+    );
+    
+    // Step 2: Flash white after zoom
+    setTimeout(() => {
+      setFlash(true);
+      if (overlayRef.current) {
+        // Fade in the white overlay
+        animateValue(
+          overlayRef.current.style,
+          'opacity',
+          1,
+          0.5,
+          'easeOut',
+          null,
+          () => {
+            // Hold the white screen briefly then fade out
+            setTimeout(() => {
+              animateValue(
+                overlayRef.current.style,
+                'opacity',
+                0,
+                0.8,
+                'easeInOut',
+                null,
+                () => {
+                  if (onComplete) onComplete();
+                }
+              );
+            }, 300);
+          }
+        );
+      }
+    }, 800);
+  };
+  
+  useEffect(() => {
+    triggerTransition();
+  }, []);
+  
+  return (
+    <>
+      {flash && (
+        <div
+          ref={overlayRef}
+          className="fixed inset-0 z-50 pointer-events-none"
+          style={{
+            background: "radial-gradient(circle, white 70%, rgba(255,255,255,0.8) 100%)",
+            opacity: 0,
+          }}
+        />
+      )}
+    </>
+  );
+}
 
 export default function SpaceLandingPage({ onEnter }) {
   const mountRef = useRef(null);
@@ -215,10 +335,17 @@ export default function SpaceLandingPage({ onEnter }) {
       particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
+      
+       // Load particle texture with error handling
+      const textureLoader = new THREE.TextureLoader();
+      // Create materials for different particle types
+      const sparkleTexture = textureLoader.load(sparkleImg);
+
       const particleMaterial = new THREE.PointsMaterial({
         size: 5, // Increased size for better visibility
         transparent: true,
         vertexColors: true,
+        map: sparkleTexture,
         depthWrite: false,
         blending: THREE.AdditiveBlending
       });
@@ -540,64 +667,64 @@ export default function SpaceLandingPage({ onEnter }) {
 
   return (
     <div className="relative w-full h-screen overflow-hidden cursor-pointer bg-black"
-         onClick={onEnter}>
+         onClick={!isTransitioning ? onEnter : undefined}>
       {/* 3D Canvas */}
       <div ref={mountRef} className="w-full h-full" />
 
       {/* Instructions overlay */}
-      <div className="absolute top-8 left-8 text-white z-10">
-        <div className="bg-black/50 p-4 rounded-lg backdrop-blur-sm">
-          <h1 className="text-2xl font-bold mb-2">Welcome to Kyle's 3D Universe</h1>
-          <div className="text-sm space-y-1 opacity-90">
-            <div>🖱️ <strong>Mouse:</strong> Look around</div>
-            <div>✨ <strong>Click & hold sphere:</strong> See particle effects</div>
-            <div>🚀 <strong>Click sphere:</strong> Enter website</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Model Configuration Info */}
-      <div className="absolute top-8 right-8 text-white z-10">
-        <div className="bg-black/50 p-4 rounded-lg backdrop-blur-sm text-sm">
-          <h3 className="font-bold mb-2">3D Assets Status</h3>
-          <div className="space-y-1 opacity-80">
-            <div>Main Sphere: {MODEL_CONFIG.mainSphere.useModel ? "3D Model" : "Geometry"}</div>
-            <div>Nebula: {MODEL_CONFIG.nebulaClouds.useModels ? "3D Models" : "Geometry"}</div>
-            <div>Asteroids: {MODEL_CONFIG.asteroids.useModels ? "3D Models" : "Geometry"}</div>
-            <div>Structures: {MODEL_CONFIG.spaceStructures.useModels ? "Enabled" : "Disabled"}</div>
-            <div className="text-yellow-400 mt-2">⚡ Particles: Active</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
-        <div className="text-center text-white">
-          {isTransitioning && (
-            <div className="text-3xl font-semibold animate-bounce bg-black/50 p-6 rounded-lg backdrop-blur-sm">
-              ✨ Entering the website...
+      {!isTransitioning && (
+        <div className="absolute top-8 left-8 text-white z-10">
+          <div className="bg-black/50 p-4 rounded-lg backdrop-blur-sm">
+            <h1 className="text-2xl font-bold mb-2">Welcome to Kyle's 3D Universe</h1>
+            <div className="text-sm space-y-1 opacity-90">
+              <div>🖱️ <strong>Mouse:</strong> Look around</div>
+              <div>✨ <strong>Click & hold sphere:</strong> See particle effects</div>
+              <div>🚀 <strong>Click sphere:</strong> Enter website</div>
             </div>
-          )}
+          </div>
         </div>
-      </div>
-
-      {/* Crosshair */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
-        <div className="w-4 h-4 border border-white/50 border-dashed"></div>
-      </div>
-
-      {/* Transition overlay */}
-      {isTransitioning && (
-        <div className="absolute inset-0 bg-white opacity-0 animate-fade-in-slow z-20"
-             style={{ animation: 'fadeInSlow 2s ease-out forwards' }} />
       )}
 
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        @keyframes fadeInSlow {
-          0% { opacity: 0; }
-          100% { opacity: 1; }
-        }
-      `}} />
+      {/* Model Configuration Info */}
+      {!isTransitioning && (
+        <div className="absolute top-8 right-8 text-white z-10">
+          <div className="bg-black/50 p-4 rounded-lg backdrop-blur-sm text-sm">
+            <h3 className="font-bold mb-2">3D Assets Status</h3>
+            <div className="space-y-1 opacity-80">
+              <div>Main Sphere: {MODEL_CONFIG.mainSphere.useModel ? "3D Model" : "Geometry"}</div>
+              <div>Nebula: {MODEL_CONFIG.nebulaClouds.useModels ? "3D Models" : "Geometry"}</div>
+              <div>Asteroids: {MODEL_CONFIG.asteroids.useModels ? "3D Models" : "Geometry"}</div>
+              <div>Structures: {MODEL_CONFIG.spaceStructures.useModels ? "Enabled" : "Disabled"}</div>
+              <div className="text-yellow-400 mt-2">⚡ Particles: Active</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Crosshair */}
+      {!isTransitioning && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
+          <div className="w-4 h-4 border border-white/50 border-dashed"></div>
+        </div>
+      )}
+
+      {/* Transition status */}
+      {isTransitioning && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
+          <div className="text-center text-white">
+            <div className="text-3xl font-semibold animate-pulse bg-black/70 p-6 rounded-lg backdrop-blur-sm">
+              🌌 Initiating transition...
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Integrated Transition Component */}
+      {cameraRef.current && (
+        <Transition 
+          camera={cameraRef.current} 
+        />
+      )}
     </div>
   );
 }
